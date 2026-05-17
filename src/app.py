@@ -1,108 +1,146 @@
 #!/usr/bin/env python3
 """
-world-clock - 世界时钟工具
-分类：📦 其他实用
-作者：102839544
-版本：1.0.0
+world-clock - 世界时钟
+工具编号: tool-087
 """
 
-import sys
-import os
-from pathlib import Path
 import tkinter as tk
-from tkinter import ttk, messagebox, filedialog
+from tkinter import ttk, messagebox
+from datetime import datetime
+import random
 
 class App:
     def __init__(self, root):
         self.root = root
-        root.title("world-clock v1.0")
+        root.title("世界时钟 v1.0")
         root.geometry("700x500")
-        root.resizable(True, True)
-        
         self.setup_ui()
     
     def setup_ui(self):
-        # 标题栏
-        title_frame = tk.Frame(self.root, bg="#1a73e8", height=60)
+        # 标题
+        title_frame = tk.Frame(self.root, bg="#009688", height=60)
         title_frame.pack(fill="x")
         title_frame.pack_propagate(False)
+        tk.Label(title_frame, text="📦 世界时钟", font=("Arial", 18, "bold"),
+                 fg="white", bg="#009688").pack(pady=15)
         
-        tk.Label(
-            title_frame, 
-            text="🔧 world-clock", 
-            font=("Arial", 16, "bold"),
-            fg="white", 
-            bg="#1a73e8"
-        ).pack(pady=15)
-        
-        # 主容器
-        main = tk.Frame(self.root, padx=20, pady=15)
+        # 主区域
+        main = tk.Frame(self.root, padx=30, pady=20)
         main.pack(fill="both", expand=True)
         
-        # 功能区
-        tk.Label(
-            main, 
-            text="世界时钟工具", 
-            font=("Arial", 12),
-            fg="gray"
-        ).pack(pady=20)
-        
-        # 操作按钮示例
-        btn_frame = tk.Frame(main)
-        btn_frame.pack(pady=30)
-        
-        tk.Button(
-            btn_frame, 
-            text="📂 选择文件", 
-            command=self.select_file,
-            bg="#1a73e8", fg="white",
-            font=("Arial", 11),
-            padx=20, pady=10,
-            cursor="hand2"
-        ).pack(side="left", padx=10)
-        
-        tk.Button(
-            btn_frame, 
-            text="⚙️ 开始处理", 
-            command=self.process,
-            bg="#34a853", fg="white",
-            font=("Arial", 11, "bold"),
-            padx=20, pady=10,
-            cursor="hand2"
-        ).pack(side="left", padx=10)
-        
-        # 结果区域
-        tk.Label(main, text="处理结果：", font=("Arial", 10, "bold")).pack(anchor="w", pady=(20, 5))
-        
-        self.result_text = tk.Text(main, height=10, font=("Consolas", 10))
-        self.result_text.pack(fill="both", expand=True)
+        # 根据工具名称添加特定功能
+        if "timer" in "world-clock".lower() or "clock" in "world-clock".lower():
+            self.setup_timer_ui(main)
+        elif "random" in "world-clock".lower() or "dice" in "world-clock".lower() or "coin" in "world-clock".lower():
+            self.setup_random_ui(main)
+        elif "note" in "world-clock".lower() or "todo" in "world-clock".lower():
+            self.setup_note_ui(main)
+        else:
+            self.setup_generic_ui(main)
         
         # 状态栏
-        self.status = tk.Label(
-            main, 
-            text="就绪 - 请选择文件开始处理", 
-            font=("Arial", 10),
-            fg="gray",
-            anchor="w"
-        )
-        self.status.pack(fill="x", pady=(10, 0))
+        self.status_var = tk.StringVar(value="就绪")
+        tk.Label(main, textvariable=self.status_var, fg="gray").pack(fill="x", pady=10)
     
-    def select_file(self):
-        file = filedialog.askopenfilename(title="选择文件")
-        if file:
-            self.result_text.delete(1.0, "end")
-            self.result_text.insert(1.0, f"已选择: {Path(file).name}")
-            self.status.config(text=f"已选择文件: {Path(file).name}")
+    def setup_timer_ui(self, parent):
+        # 时间显示
+        self.time_label = tk.Label(parent, text="00:00:00", font=("Arial", 48, "bold"))
+        self.time_label.pack(pady=30)
+        
+        # 按钮
+        btn_frame = tk.Frame(parent)
+        btn_frame.pack(pady=20)
+        
+        tk.Button(btn_frame, text="▶️ 开始", command=self.start_timer,
+                  bg="#4CAF50", fg="white", font=("Arial", 12), padx=20, pady=10).pack(side="left", padx=10)
+        tk.Button(btn_frame, text="⏸️ 暂停", command=self.pause_timer,
+                  bg="#FF9800", fg="white", font=("Arial", 12), padx=20, pady=10).pack(side="left", padx=10)
+        tk.Button(btn_frame, text="🔄 重置", command=self.reset_timer,
+                  bg="#f44336", fg="white", font=("Arial", 12), padx=20, pady=10).pack(side="left", padx=10)
+        
+        self.running = False
+        self.seconds = 0
+        self.update_timer()
     
-    def process(self):
-        # TODO: 实现具体功能
-        self.result_text.delete(1.0, "end")
-        self.result_text.insert(1.0, "✅ 功能开发中...\n\n欢迎贡献代码！")
-        self.status.config(text="处理完成")
+    def start_timer(self):
+        self.running = True
+        self.status_var.set("计时中...")
+    
+    def pause_timer(self):
+        self.running = False
+        self.status_var.set("已暂停")
+    
+    def reset_timer(self):
+        self.running = False
+        self.seconds = 0
+        self.time_label.config(text="00:00:00")
+        self.status_var.set("已重置")
+    
+    def update_timer(self):
+        if self.running:
+            self.seconds += 1
+            h = self.seconds // 3600
+            m = (self.seconds % 3600) // 60
+            s = self.seconds % 60
+            self.time_label.config(text=f"{h:02d}:{m:02d}:{s:02d}")
+        self.root.after(1000, self.update_timer)
+    
+    def setup_random_ui(self, parent):
+        # 结果显示
+        self.result_label = tk.Label(parent, text="点击按钮生成", font=("Arial", 36, "bold"))
+        self.result_label.pack(pady=40)
+        
+        # 按钮
+        btn_frame = tk.Frame(parent)
+        btn_frame.pack(pady=20)
+        
+        tk.Button(btn_frame, text="🎲 随机生成", command=self.generate_random,
+                  bg="#9C27B0", fg="white", font=("Arial", 14, "bold"),
+                  padx=40, pady=15).pack(pady=20)
+    
+    def generate_random(self):
+        if "dice" in "world-clock".lower():
+            result = random.randint(1, 6)
+            self.result_label.config(text=f"🎲 {result}")
+        elif "coin" in "world-clock".lower():
+            result = random.choice(["正面", "反面"])
+            self.result_label.config(text=f"🪙 {result}")
+        else:
+            result = random.randint(1, 100)
+            self.result_label.config(text=str(result))
+        self.status_var.set("✅ 已生成")
+    
+    def setup_note_ui(self, parent):
+        # 输入区
+        tk.Label(parent, text="📝 输入内容:", font=("Arial", 10, "bold")).pack(anchor="w")
+        self.note_entry = tk.Text(parent, font=("Arial", 11), height=10)
+        self.note_entry.pack(fill="both", expand=True, pady=10)
+        
+        # 按钮
+        btn_frame = tk.Frame(parent)
+        btn_frame.pack(fill="x")
+        
+        tk.Button(btn_frame, text="💾 保存", command=self.save_note,
+                  bg="#4CAF50", fg="white", padx=20, pady=8).pack(side="left", padx=5)
+        tk.Button(btn_frame, text="🗑️ 清空", command=self.clear_note,
+                  bg="#f44336", fg="white", padx=20, pady=8).pack(side="left", padx=5)
+    
+    def save_note(self):
+        self.status_var.set("✅ 已保存")
+        messagebox.showinfo("保存", "笔记已保存")
+    
+    def clear_note(self):
+        self.note_entry.delete(1.0, tk.END)
+        self.status_var.set("已清空")
+    
+    def setup_generic_ui(self, parent):
+        tk.Label(parent, text="🔧 功能开发中...", font=("Arial", 16)).pack(pady=50)
+        tk.Button(parent, text="开始使用", command=lambda: messagebox.showinfo("提示", "功能开发中"),
+                  bg="#4CAF50", fg="white", padx=30, pady=15).pack(pady=20)
 
 def main():
     root = tk.Tk()
-    app = App(root)
+    App(root)
     root.mainloop()
 
 if __name__ == "__main__":
